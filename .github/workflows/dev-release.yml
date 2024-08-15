@@ -3,7 +3,7 @@ name: test infra dev-release
 on:
   push:
     branches:
-      - develop
+      - dev
 
 jobs:
   deploy-development:
