@@ -1,0 +1,30 @@
+name: test infra dev-release
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy-development:
+    environment: develop
+    runs-on: ubuntu-latest
+    env:
+      ENV: dev
+      ProjectName: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.2
+      - name: pip install
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: ls command
+        run: |
+          aws s3 ls
+      # - name: Deploy CFn
+      #   run: |
+      #     python deploy.py
+      # - name: Deploy Lambda
+      #   run: |
+      #     sh lambda_deploy.sh
