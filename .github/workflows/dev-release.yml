@@ -24,12 +24,9 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: ls command
+      - name: Deploy CFn
         run: |
-          aws s3 ls
-      # - name: Deploy CFn
-      #   run: |
-      #     python deploy.py
+          python deploy.py
       # - name: Deploy Lambda
       #   run: |
       #     sh lambda_deploy.sh
