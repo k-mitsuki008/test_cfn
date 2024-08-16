@@ -47,33 +47,34 @@ def main(is_dryrun=False):
     with open(param_path, "r", encoding="UTF-8") as f:
         all_param_dic = json.load(f)["Parameters"]
 
-    if is_dryrun:
-        runstr = "dryrun"
-        result = dryrun(all_param_dic)
-        print("result:")
-        pprint(result, indent=4)
-    else:
-        runstr = "deploy"
-        result = deploy(all_param_dic)
-        print("result:")
-        pprint(result, indent=4)
+    print(is_dryrun)
+    # if is_dryrun:
+    #     runstr = "dryrun"
+    #     result = dryrun(all_param_dic)
+    #     print("result:")
+    #     pprint(result, indent=4)
+    # else:
+    #     runstr = "deploy"
+    #     result = deploy(all_param_dic)
+    #     print("result:")
+    #     pprint(result, indent=4)
 
-    message_prefix = f"***** {ENV} {runstr} result *****"
-    message = f"""{message_prefix}
+    # message_prefix = f"***** {ENV} {runstr} result *****"
+    # message = f"""{message_prefix}
 
-    {json.dumps(result, indent=4)}
-    """
+    # {json.dumps(result, indent=4)}
+    # """
 
-    if URL != "":
-        # remove past dryrun results on PR
-        clean_before_ci_pull_request_comments(message_prefix)
+    # if URL != "":
+    #     # remove past dryrun results on PR
+    #     clean_before_ci_pull_request_comments(message_prefix)
 
-        # post dryrun results to PR
-        post_to_pull_request(message)
+    #     # post dryrun results to PR
+    #     post_to_pull_request(message)
 
-    else:
-        print("----- all result -----")
-        print(message)
+    # else:
+    #     print("----- all result -----")
+    #     print(message)
 
 
 def dryrun(all_param_dic: dict) -> dict:
