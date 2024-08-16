@@ -33,7 +33,8 @@ class YmlItem:
 
 # Deploy(or Dryrun) Order of YML
 YML_ORDER = [
-    YmlItem("dynamodb.yml", "eu-west-1")
+    YmlItem("dynamodb.yml", "eu-west-1"),
+    YmlItem("securitygroup.yml", "eu-west-1")
 ]
 
 

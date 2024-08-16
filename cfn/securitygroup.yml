@@ -1,0 +1,370 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Security Group
+
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: "Project Name Prefix and Environment"
+        Parameters:
+          - ProjectName
+          - Env
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: voice-km
+
+  Env:
+    Type: String
+    Default: prd
+
+  SecurityGroupIngressKddiGIP01:
+    Type: String
+    Default: 208.127.111.180/32
+  
+  SecurityGroupIngressKddiGIP02:
+    Type: String
+    Default: 66.159.200.79/32
+
+  SecurityGroupIngressKddiGIP03:
+    Type: String
+    Default: 137.83.216.7/32
+  
+  SecurityGroupIngressKddiGIP04:
+    Type: String
+    Default: 137.83.216.125/32
+
+  SecurityGroupIngressIretGIP01:
+    Type: String
+
+  SecurityGroupIngressIretGIP02:
+    Type: String
+
+  SecurityGroupIngressIretGIP03:
+    Type: String
+
+  SecurityGroupIngressIretGIP04:
+    Type: String
+
+  SwanNatIP01:
+    Type: String
+    Default: 192.168.51.97/32
+
+  SwanNatIP02:
+    Type: String
+    Default: 192.168.51.98/32
+
+  SwanNatIP03:
+    Type: String
+    Default: 192.168.51.99/32
+
+Conditions:
+  IsDevStg: !Or [!Equals [!Ref Env, "dev"], !Equals [!Ref Env, "stg"]]
+
+Resources:
+  # EC2
+  ## Bastion
+  BastionEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: bastion ec2 security group
+      VpcId: vpc-0cb1c626df9c2ec4b
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-bastion-ec2-sg
+
+  BastionEC2SecurityGroupIngressIretGIP01:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressIretGIP01
+
+  BastionEC2SecurityGroupIngressIretGIP02:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressIretGIP02
+
+  BastionEC2SecurityGroupIngressIretGIP03:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressIretGIP03
+
+  BastionEC2SecurityGroupIngressIretGIP04:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressIretGIP04
+
+  BastionEC2SecurityGroupIngressKddiGIP01:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressKddiGIP01
+
+  BastionEC2SecurityGroupIngressKddiGIP02:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressKddiGIP02
+  
+  BastionEC2SecurityGroupIngressKddiGIP03:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressKddiGIP03
+
+  BastionEC2SecurityGroupIngressKddiGIP04:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressKddiGIP04
+
+  BastionEC2SecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 0
+      CidrIp: 0.0.0.0/0
+
+#   ## Batch
+#   BatchEC2SecurityGroup:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: batch ec2 security group
+#       VpcId: !ImportValue VoiceDxVPCID
+#       Tags:
+#         - Key: Name
+#           Value: !Sub ${Env}-${ProjectName}-batch-ec2-sg
+
+#   BatchEC2SecurityGroupIngress:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref BatchEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 22
+#       ToPort: 22
+#       SourceSecurityGroupId: !Ref BastionEC2SecurityGroup
+
+#   BatchEC2SecurityGroupEgress:
+#     Type: AWS::EC2::SecurityGroupEgress
+#     Properties:
+#       GroupId: !Ref BatchEC2SecurityGroup
+#       IpProtocol: -1
+#       FromPort: 0
+#       ToPort: 0
+#       CidrIp: 0.0.0.0/0
+
+#   ## Deploy
+#   DeployEC2SecurityGroup:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: deploy ec2 security group
+#       VpcId: !ImportValue ManageVPCID
+#       Tags:
+#         - Key: Name
+#           Value: !Sub ${Env}-${ProjectName}-deploy-ec2-sg
+
+#   DeployEC2SecurityGroupEgress:
+#     Type: AWS::EC2::SecurityGroupEgress
+#     Properties:
+#       GroupId: !Ref DeployEC2SecurityGroup
+#       IpProtocol: -1
+#       FromPort: 0
+#       ToPort: 0
+#       CidrIp: 0.0.0.0/0
+
+#   ## Hulft
+#   HulftEC2SecurityGroup:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: hulft ec2 security group
+#       VpcId: !ImportValue HulftVPCID
+#       Tags:
+#         - Key: Name
+#           Value: !Sub ${Env}-${ProjectName}-hulft-ec2-sg
+
+#   HulftEC2SecurityGroupIngress:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 22
+#       ToPort: 22
+#       SourceSecurityGroupId: !Ref BastionEC2SecurityGroup
+
+#   HulftEC2SecurityGroupIngress30000SwanIP01:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 30000
+#       ToPort: 30000
+#       CidrIp: !Ref SwanNatIP01
+
+#   HulftEC2SecurityGroupIngress30000SwanIP02:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 30000
+#       ToPort: 30000
+#       CidrIp: !Ref SwanNatIP02
+
+#   HulftEC2SecurityGroupIngress30000SwanIP03:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 30000
+#       ToPort: 30000
+#       CidrIp: !Ref SwanNatIP03
+
+#   HulftEC2SecurityGroupIngress31000SwanIP01:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 31000
+#       ToPort: 31000
+#       CidrIp: !Ref SwanNatIP01
+
+#   HulftEC2SecurityGroupIngress31000SwanIP02:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 31000
+#       ToPort: 31000
+#       CidrIp: !Ref SwanNatIP02
+
+#   HulftEC2SecurityGroupIngress31000SwanIP03:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: tcp
+#       FromPort: 31000
+#       ToPort: 31000
+#       CidrIp: !Ref SwanNatIP03
+
+#   HulftEC2SecurityGroupIngressICMPSwanIP01:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: icmp
+#       FromPort: -1
+#       ToPort: -1
+#       CidrIp: !Ref SwanNatIP01
+
+#   HulftEC2SecurityGroupIngressICMPSwanIP02:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: icmp
+#       FromPort: -1
+#       ToPort: -1
+#       CidrIp: !Ref SwanNatIP02
+
+#   HulftEC2SecurityGroupIngressICMPSwanIP03:
+#     Type: AWS::EC2::SecurityGroupIngress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: icmp
+#       FromPort: -1
+#       ToPort: -1
+#       CidrIp: !Ref SwanNatIP03
+
+#   HulftEC2SecurityGroupEgress:
+#     Type: AWS::EC2::SecurityGroupEgress
+#     Properties:
+#       GroupId: !Ref HulftEC2SecurityGroup
+#       IpProtocol: -1
+#       FromPort: 0
+#       ToPort: 0
+#       CidrIp: 0.0.0.0/0
+
+#   ## Lambda
+#   LambdaSecurityGroup:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: vpc lambdas security group
+#       VpcId: !ImportValue VoiceDxVPCID
+#       Tags:
+#         - Key: Name
+#           Value: !Sub ${Env}-${ProjectName}-lambda-sg
+
+#   LambdaSecurityGroupEgress:
+#     Type: AWS::EC2::SecurityGroupEgress
+#     Properties:
+#       GroupId: !Ref LambdaSecurityGroup
+#       IpProtocol: -1
+#       FromPort: 0
+#       ToPort: 0
+#       CidrIp: 0.0.0.0/0
+
+# Outputs:
+#   # Bastion EC2 Security Group ID
+#   BastionEC2SecurityGroupId:
+#     Value: !GetAtt BastionEC2SecurityGroup.GroupId
+#     Export:
+#       Name: BastionEC2SecurityGroupId
+
+#   # Batch EC2 Security Group ID
+#   BatchEC2SecurityGroupId:
+#     Value: !GetAtt BatchEC2SecurityGroup.GroupId
+#     Export:
+#       Name: BatchEC2SecurityGroupId
+
+#   # Deploy Security Group ID
+#   DeployEC2SecurityGroupId:
+#     Value: !GetAtt DeployEC2SecurityGroup.GroupId
+#     Export:
+#       Name: DeployEC2SecurityGroupId
+
+#   # Hulft Security Group ID
+#   HulftEC2SecurityGroupId:
+#     Value: !GetAtt HulftEC2SecurityGroup.GroupId
+#     Export:
+#       Name: HulftEC2SecurityGroupId
+
+#   # Lambda Security Group ID
+#   LambdaSecurityGroupId:
+#     Value: !GetAtt LambdaSecurityGroup.GroupId
+#     Export:
+#       Name: LambdaSecurityGroupId

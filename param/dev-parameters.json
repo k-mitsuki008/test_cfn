@@ -1,6 +1,13 @@
 {
   "Parameters": {
     "ProjectName": "voice-km",
-    "Env": "dev"
+    "Env": "dev",    
+    "SecurityGroupIngressIretGIP01": "134.238.4.84/32",
+    "SecurityGroupIngressIretGIP02": "134.238.4.83/32",
+    "SecurityGroupIngressIretGIP03": "114.141.120.50/32",
+    "SecurityGroupIngressIretGIP04": "114.141.120.185/32",
+    "SwanNatIP01": "192.168.51.57/32",
+    "SwanNatIP02": "192.168.51.58/32",
+    "SwanNatIP03": "192.168.51.59/32"
   }
 }
