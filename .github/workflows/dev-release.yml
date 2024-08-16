@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ENV: dev
-      ProjectName: test
+      ProjectName: voice-km
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
