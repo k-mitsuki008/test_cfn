@@ -144,6 +144,7 @@ def process_yml(yml_item: YmlItem, all_param_dic: dict, deploys: bool) -> List:
 
     middle_name = "deploy" if deploys else "dryrun"
     change_set_name = f"{stack_suffix}-{middle_name}-{int(time.time())}"
+    print("come")
 
     yml_url = upload_yml_to_s3(yml_path, yml_item.region)
     if not is_stack_exists(client, stack_name):
