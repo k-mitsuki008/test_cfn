@@ -47,6 +47,9 @@ Parameters:
   SecurityGroupIngressIretGIP04:
     Type: String
 
+  SecurityGroupIngressCustomerGIP01:
+    Type: String
+
   SwanNatIP01:
     Type: String
     Default: 192.168.51.97/32
@@ -56,6 +59,10 @@ Parameters:
     Default: 192.168.51.98/32
 
   SwanNatIP03:
+    Type: String
+    Default: 192.168.51.99/32
+
+  :
     Type: String
     Default: 192.168.51.99/32
 
@@ -153,6 +160,16 @@ Resources:
       FromPort: 22
       ToPort: 22
       CidrIp: !Ref SecurityGroupIngressKddiGIP04
+
+  BastionSecurityGroupIngressCustomerGIP01:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevStg
+    Properties:
+      GroupId: !Ref BastionEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SecurityGroupIngressCustomerGIP01
 
   BastionEC2SecurityGroupEgress:
     Type: AWS::EC2::SecurityGroupEgress
