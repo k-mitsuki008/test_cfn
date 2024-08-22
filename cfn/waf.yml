@@ -25,7 +25,7 @@ Metadata:
 Parameters:
   ProjectName:
     Type: String
-    Default: voice-dx
+    Default: voice-km
 
   Env:
     Type: String
