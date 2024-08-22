@@ -8,7 +8,7 @@
     "1stKidsAllowAddresses": "210.141.112.34/32,27.93.199.226/32",
     "KDSAllowAddresses": "52.68.110.188/32",
     "IRETAllowAddresses": "134.238.4.84/32,134.238.4.83/32,114.141.120.50/32,114.141.120.185/32,54.64.137.251/32",
-    "KITBastionAllowAddresses": "210.249.29.55/32",
+    "KITBastionAllowAddresses": "210.249.29.55/32,210.249.29.111/32",
     "TestAllowAddresses": "35.75.250.201/32",
     "SecurityRoomAllowAddresses": "114.156.2.128/32,113.157.219.146/32"
   }
