@@ -104,6 +104,8 @@ Resources:
                 Statements:
                   - IPSetReferenceStatement:
                       Arn: !GetAtt IPWhiteListPrismaAccess.Arn
+                  - IPSetReferenceStatement:
+                      Arn: !GetAtt   IPWhiteListSecurityRoom.Arn
             VisibilityConfig:
               SampledRequestsEnabled: true
               CloudWatchMetricsEnabled: true
@@ -133,4 +135,15 @@ Resources:
       Name: !Sub ${Env}-${ProjectName}-kit-bastion-ipsets
       IPAddressVersion: IPV4
       Addresses: !Ref KITBastionAllowAddresses
+      Scope: !Ref WebACLScope
+
+  ## KDDI/IRETセキュリティルーム
+  IPWhiteListSecurityRoom:
+    Type: AWS::WAFv2::IPSet
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      Name: !Sub ${Env}-${ProjectName}-security-room-ipsets
+      IPAddressVersion: IPV4
+      Addresses: !Ref SecurityRoomAllowAddresses
       Scope: !Ref WebACLScope
