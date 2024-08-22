@@ -1,11 +1,15 @@
 {
   "Parameters": {
-    "ProjectName": "voice-km",
-    "Env": "dev",    
-    "SecurityGroupIngressIretGIP01": "134.238.4.84/32",
-    "SecurityGroupIngressIretGIP02": "134.238.4.83/32",
-    "SecurityGroupIngressIretGIP03": "114.141.120.50/32",
-    "SecurityGroupIngressIretGIP04": "114.141.120.185/32",
-    "SecurityGroupIngressCustomerGIP01": "175.129.44.149/32"
+    "ProjectName": "voice-dx",
+    "Env": "dev",
+
+    "PrismaAccessAllowAddresses": "208.127.111.180/32,66.159.200.79/32,137.83.216.7/32,137.83.216.125/32",
+    "SecurePCAllowAddresses": "27.86.89.88/32,27.86.89.89/32,27.86.90.48/32,27.86.96.88/32,27.86.96.160/32,27.86.96.161/32,111.107.247.49/32,111.107.247.50/32,222.3.140.122/32,222.3.140.116/32",
+    "1stKidsAllowAddresses": "210.141.112.34/32,27.93.199.226/32",
+    "KDSAllowAddresses": "52.68.110.188/32",
+    "IRETAllowAddresses": "134.238.4.84/32,134.238.4.83/32,114.141.120.50/32,114.141.120.185/32,54.64.137.251/32",
+    "KITBastionAllowAddresses": "210.249.29.55/32",
+    "TestAllowAddresses": "35.75.250.201/32",
+    "SecurityRoomAllowAddresses": "114.156.2.128/32,113.157.219.146/32"
   }
 }
