@@ -7,7 +7,7 @@
     "DBMasterPassword": "-%VmCMruJ4]#W9Cjb4)RY2>{Jm9d",
     "DBName": "dev_voice",
     "RdsInstanceClass": "db.t3.medium",
-    "RdsEngineVersion": "12.13",
+    "RdsEngineVersion": "12.19",
     "SnapshotIdentifier": "dev-voice-dx-snapshot-20240826"
   }
 }
