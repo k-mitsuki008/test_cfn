@@ -112,8 +112,8 @@ Resources:
       DBSubnetGroupDescription: !Sub ${Env}-${ProjectName}-db-subnet
       DBSubnetGroupName: !Sub ${Env}-${ProjectName}-db-subnet
       SubnetIds:
-        - !ImportValue "subnet-050420cf7c6ba6a7d"
-        - !ImportValue "subnet-0c0a34efa7e750b7c"
+        - "subnet-050420cf7c6ba6a7d"
+        - "subnet-0c0a34efa7e750b7c"
       Tags:
         - Key: Name
           Value: !Sub ${Env}-${ProjectName}-db-subnet
