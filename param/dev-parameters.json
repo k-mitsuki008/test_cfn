@@ -8,6 +8,6 @@
     "DBName": "dev_voice",
     "RdsInstanceClass": "db.t3.medium",
     "RdsEngineVersion": "12.13",
-    "SnapshotIdentifier": "dev-voice-dx-snapshot-20240826"
+    "SnapshotIdentifier": "dev-voice-dx-snapshot-20240826-2"
   }
 }
