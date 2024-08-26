@@ -3,11 +3,11 @@
     "ProjectName": "voice-dx",
     "Env": "dev",
 
-    "DBMasterUserName": "dbuser",
-    "DBMasterPassword": "oNm4Tqhww89xpPQIslWS",
+    "DBMasterUserName": "postgres",
+    "DBMasterPassword": "-%VmCMruJ4]#W9Cjb4)RY2>{Jm9d",
     "DBName": "dev_voice",
     "RdsInstanceClass": "db.t3.medium",
-    "RdsEngineVersion": "12.19",
+    "RdsEngineVersion": "12.13",
     "SnapshotIdentifier": "dev-voice-dx-snapshot-20240826"
   }
 }
