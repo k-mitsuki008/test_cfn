@@ -100,8 +100,8 @@ Parameters:
       - true
       - false
 
-  SubnetIds: 
-      - String
+  # SubnetIds: 
+  #     - String
 
 
 Conditions:
