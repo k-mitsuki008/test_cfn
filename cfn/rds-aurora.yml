@@ -1,0 +1,283 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: RDS Aurora PostgreSQL
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Project Name Prefix and Environment
+        Parameters:
+          - ProjectName
+          - Env
+      - Label:
+          default: RDS Aurora
+        Parameters:
+          - RdsEngine
+          - RdsEngineVersion
+          - Family
+          - RdsInstanceClass
+          - StorageEncrypted
+          - DBMasterUserName
+          - DBMasterUserPassword
+          - DBPort
+          - DBName
+          - BackupRetentionPeriod
+          - BackupWindow
+          - MaintenanceWindow
+          - DeletionProtection
+          - SnapshotIdentifier
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: voice-dx
+
+  Env:
+    Type: String
+    Default: prd
+
+  # RDS Aurora
+  RdsEngine:
+    Type: String
+    Default: aurora-postgresql
+
+  RdsEngineVersion:
+    Type: String
+
+  Family:
+    Type: String
+    Default: aurora-postgresql12
+
+  RdsInstanceClass:
+    Type: String
+    Default: db.r6g.2xlarge
+
+  StorageEncrypted:
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+
+  SnapshotIdentifier:
+    Type: String
+    Default: ""
+
+  DBMasterUserName:
+    Type: String
+    Default: "{{resolve:ssm:MasterUsername:1}}"
+    NoEcho: true
+
+  DBMasterUserPassword:
+    Type: String
+    Default: "{{resolve:ssm-secure:MasterUserPassword:1}}"
+    NoEcho: true
+
+  DBPort:
+    Type: Number
+    Default: 5432
+
+  DBName:
+    Type: String
+    Default: prd_voice_dx
+
+  BackupRetentionPeriod:
+    Type: Number
+    Default: 2
+
+  BackupWindow:
+    Type: String
+    Default: 15:30-16:00
+
+  MaintenanceWindow:
+    Type: String
+    Default: mon:21:00-mon:21:30
+
+  DeletionProtection:
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+
+Conditions:
+  IsStgPrd: !Or [!Equals [!Ref Env, "stg"], !Equals [!Ref Env, "prd"]]
+  UseDBSnapshot: !Not [!Equals [!Ref SnapshotIdentifier, ""]]
+
+Resources:
+  # Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub ${Env}-${ProjectName}-db-subnet
+      DBSubnetGroupName: !Sub ${Env}-${ProjectName}-db-subnet
+      SubnetIds:
+        - !ImportValue "subnet-050420cf7c6ba6a7d"
+        - !ImportValue "subnet-0c0a34efa7e750b7c"
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-db-subnet
+
+  # Parameter Group
+  ## Cluster
+  DBClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: DBCluster ParameterGroup
+      Family: !Ref Family
+      Parameters:
+        timezone: UTC
+        ## １秒以上かかるスロークエリを出力
+        log_statement: mod
+        log_min_duration_statement: 1000
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-cluster-pg
+
+  ## Instance
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: DB ParameterGroup
+      Family: !Ref Family
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-pg
+
+  # Aurora Cluster
+  DBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      DatabaseName: !Ref DBName
+      DBClusterIdentifier: !Sub ${Env}-${ProjectName}-db-cluster
+      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      SnapshotIdentifier: !If [UseDBSnapshot, !Ref SnapshotIdentifier, !Ref "AWS::NoValue"]
+      Engine: !Ref RdsEngine
+      Port: !Ref DBPort
+      MasterUsername: !If [UseDBSnapshot, !Ref "AWS::NoValue", !Ref DBMasterUserName]
+      MasterUserPassword: !If [UseDBSnapshot, !Ref "AWS::NoValue", !Ref DBMasterUserPassword]
+      BackupRetentionPeriod: !Ref BackupRetentionPeriod
+      PreferredBackupWindow: !Ref BackupWindow
+      PreferredMaintenanceWindow: !Ref MaintenanceWindow
+      EngineVersion: !Ref RdsEngineVersion
+      StorageEncrypted: !Ref StorageEncrypted
+      DeletionProtection: !Ref DeletionProtection
+      VpcSecurityGroupIds:
+        - !Ref SecurityGroupDB
+      EnableCloudwatchLogsExports:
+        - postgresql
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-db-cluster
+
+  # Aurora Instance
+  ## Instance01
+  DBInstance01:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DBCluster
+      DBInstanceIdentifier: !Sub ${Env}-${ProjectName}-db-instance01
+      DBInstanceClass: !Ref RdsInstanceClass
+      DBParameterGroupName: !Ref DBParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Engine: !Ref RdsEngine
+      EngineVersion: !Ref RdsEngineVersion
+      PreferredMaintenanceWindow: !Ref MaintenanceWindow
+      EnablePerformanceInsights: true
+      AutoMinorVersionUpgrade: false
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-db-instance01
+
+  ## Instance02
+  DBInstance02:
+    Type: AWS::RDS::DBInstance
+    Condition: IsStgPrd
+    Properties:
+      DBClusterIdentifier: !Ref DBCluster
+      DBInstanceIdentifier: !Sub ${Env}-${ProjectName}-db-instance02
+      DBInstanceClass: !Ref RdsInstanceClass
+      DBParameterGroupName: !Ref DBParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Engine: !Ref RdsEngine
+      EngineVersion: !Ref RdsEngineVersion
+      PreferredMaintenanceWindow: !Ref MaintenanceWindow
+      EnablePerformanceInsights: true
+      AutoMinorVersionUpgrade: false
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-db-instance02
+
+  # Security Group
+  SecurityGroupDB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${Env}-${ProjectName} db security group
+      VpcId: "vpc-0cb1c626df9c2ec4b"
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-db-sg
+
+  SecurityGroupDBIngressBastion:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: bastion-ec2
+      GroupId: !Ref SecurityGroupDB
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: "sg-055d4a5049152ae97"
+
+  # SecurityGroupDBIngressBatch:
+  #   Type: AWS::EC2::SecurityGroupIngress
+  #   Properties:
+  #     Description: batch-ec2
+  #     GroupId: !Ref SecurityGroupDB
+  #     IpProtocol: tcp
+  #     FromPort: 5432
+  #     ToPort: 5432
+  #     SourceSecurityGroupId: !ImportValue BatchEC2SecurityGroupId
+
+  # SecurityGroupDBIngressDeploy:
+  #   Type: AWS::EC2::SecurityGroupIngress
+  #   Properties:
+  #     Description: deploy-ec2
+  #     GroupId: !Ref SecurityGroupDB
+  #     IpProtocol: tcp
+  #     FromPort: 5432
+  #     ToPort: 5432
+  #     SourceSecurityGroupId: !ImportValue DeployEC2SecurityGroupId
+
+  # SecurityGroupDBIngressLambda:
+  #   Type: AWS::EC2::SecurityGroupIngress
+  #   Properties:
+  #     Description: lambda
+  #     GroupId: !Ref SecurityGroupDB
+  #     IpProtocol: tcp
+  #     FromPort: 5432
+  #     ToPort: 5432
+  #     SourceSecurityGroupId: !ImportValue LambdaSecurityGroupId
+
+  SecurityGroupDBEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref SecurityGroupDB
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 0
+      CidrIp: 0.0.0.0/0
+
+# Outputs:
+#   DBSecurityGroupId:
+#     Value: !GetAtt SecurityGroupDB.GroupId
+#     Export:
+#       Name: DBSecurityGroupId
+
+#   DBSubnetGroupName:
+#     Description: "The name of the DB subnet group"
+#     Value: !Ref DBSubnetGroup
+#     Export:
+#       Name: DBSubnetGroupName

@@ -33,7 +33,7 @@ class YmlItem:
 
 # Deploy(or Dryrun) Order of YML
 YML_ORDER = [
-    YmlItem("waf.yml", "us-east-1")
+    YmlItem("rds-aurora.yml", "eu-west-1")
 ]
 
 
