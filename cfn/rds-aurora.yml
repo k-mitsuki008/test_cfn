@@ -100,6 +100,10 @@ Parameters:
       - true
       - false
 
+  SubnetIds: 
+      - String
+
+
 Conditions:
   IsStgPrd: !Or [!Equals [!Ref Env, "stg"], !Equals [!Ref Env, "prd"]]
   UseDBSnapshot: !Not [!Equals [!Ref SnapshotIdentifier, ""]]
