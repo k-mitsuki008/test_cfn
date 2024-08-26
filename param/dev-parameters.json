@@ -7,7 +7,7 @@
     "DBMasterPassword": "oNm4Tqhww89xpPQIslWS",
     "DBName": "dev_voice",
     "RdsInstanceClass": "db.t3.medium",
-    "RdsEngineVersion": "13.19",
+    "RdsEngineVersion": "13.15",
     "SnapshotIdentifier": "dev-spvadv-aurora-snapshot-20240816"
   }
 }
