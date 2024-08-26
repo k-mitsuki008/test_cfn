@@ -46,7 +46,7 @@ Parameters:
 
   Family:
     Type: String
-    Default: aurora-postgresql13
+    Default: aurora-postgresql12
 
   RdsInstanceClass:
     Type: String
