@@ -1,0 +1,558 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: FSx for Windows File Server
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Project Name Prefix and Environment
+        Parameters:
+          - ProjectName
+          - Env
+      - Label:
+          default: FSx for Windows
+        Parameters:
+          - FsxStorageCapacity
+          - ThroughputCapacity
+          - DeploymentType
+          - AutomaticBackupRetentionDays
+          - DailyAutomaticBackupStartTime
+          - WeeklyMaintenanceStartTime
+      - Label:
+          default: FSx Security Group
+        Parameters:
+          - SecurityGroupTokyoFTSIP
+          - SecurityGroupOsakaFTSIP
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: voice-km
+
+  Env:
+    Type: String
+    Default: prd
+
+  # FSx for Windows
+  FsxStorageCapacity:
+    Type: Number
+    Default: 32
+
+  ThroughputCapacity:
+    Type: Number
+    Default: 16
+
+  DeploymentType:
+    Type: String
+    Default: SINGLE_AZ_2
+
+  AutomaticBackupRetentionDays:
+    Type: Number
+    Default: 2
+
+  DailyAutomaticBackupStartTime:
+    Type: String
+    Default: "19:00"
+
+  WeeklyMaintenanceStartTime:
+    Type: String
+    Default: "1:16:30"
+
+  # SG
+  SecurityGroupTokyoFTSIP:
+    Description: Security Group Tokyo FTS IP
+    Type: String
+    Default: 10.100.255.1/32
+
+  SecurityGroupOsakaFTSIP:
+    Description: Security Group Osaka FTS IP
+    Type: String
+    Default: 10.100.255.129/32
+
+  CommonFTSIP:
+    Type: String
+
+
+  ### 検証CFTSとの接続設定 ###
+  TestCommonFTSIP01:
+    Type: String
+  TestCommonFTSIP02:
+    Type: String
+  TestCommonFTSIP03:
+    Type: String
+
+Conditions:
+  IsStg: !Equals [!Ref Env, "dev"]
+
+Resources:
+  # FSx for Windows
+  FSxForWindowsFileServerA:
+    Type: AWS::FSx::FileSystem
+    Properties:
+      FileSystemType: WINDOWS
+      StorageType: SSD
+      StorageCapacity: !Ref FsxStorageCapacity
+      SubnetIds:
+        - "subnet-050420cf7c6ba6a7d"
+      SecurityGroupIds:
+        - !ImportValue FSxSecurityGroupId
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}.${ProjectName}-a
+      WindowsConfiguration:
+        ActiveDirectoryId: !ImportValue DirectoryServiceMicrosoftADId
+        ThroughputCapacity: !Ref ThroughputCapacity
+        DeploymentType: !Ref DeploymentType
+        AutomaticBackupRetentionDays: !Ref AutomaticBackupRetentionDays
+        DailyAutomaticBackupStartTime: !Ref DailyAutomaticBackupStartTime
+        WeeklyMaintenanceStartTime: !Ref WeeklyMaintenanceStartTime
+
+  FSxForWindowsFileServerC:
+    Type: AWS::FSx::FileSystem
+    Properties:
+      FileSystemType: WINDOWS
+      StorageType: SSD
+      StorageCapacity: !Ref FsxStorageCapacity
+      SubnetIds:
+        - "subnet-0c0a34efa7e750b7c"
+      SecurityGroupIds:
+        - !ImportValue FSxSecurityGroupId
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}.${ProjectName}-c
+      WindowsConfiguration:
+        ActiveDirectoryId: !ImportValue DirectoryServiceMicrosoftADId
+        ThroughputCapacity: !Ref ThroughputCapacity
+        DeploymentType: !Ref DeploymentType
+        AutomaticBackupRetentionDays: !Ref AutomaticBackupRetentionDays
+        DailyAutomaticBackupStartTime: !Ref DailyAutomaticBackupStartTime
+        WeeklyMaintenanceStartTime: !Ref WeeklyMaintenanceStartTime
+
+  # Security Group
+  ## Ingress File EC2
+  FSxSecurityGroupFileEC2TCP135Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 135
+      ToPort: 135
+      SourceSecurityGroupId: !ImportValue FileEC2SecurityGroupId
+
+  FSxSecurityGroupFileEC2TCP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 445
+      ToPort: 445
+      SourceSecurityGroupId: !ImportValue FileEC2SecurityGroupId
+
+  FSxSecurityGroupFileEC2TCPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 1024
+      ToPort: 65535
+      SourceSecurityGroupId: !ImportValue FileEC2SecurityGroupId
+
+  FSxSecurityGroupFileEC2UDP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 445
+      ToPort: 445
+      SourceSecurityGroupId: !ImportValue FileEC2SecurityGroupId
+
+  FSxSecurityGroupFileEC2UDPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 1024
+      ToPort: 65535
+      SourceSecurityGroupId: !ImportValue FileEC2SecurityGroupId
+
+  ## Ingress Tokyo FTS
+  FSxSecurityGroupTokyoFTSTCP135Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 135
+      ToPort: 135
+      CidrIp: !Ref SecurityGroupTokyoFTSIP
+
+  FSxSecurityGroupTokyoFTSTCP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref SecurityGroupTokyoFTSIP
+
+  FSxSecurityGroupTokyoFTSTCPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref SecurityGroupTokyoFTSIP
+
+  FSxSecurityGroupTokyoFTSUDP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref SecurityGroupTokyoFTSIP
+
+  FSxSecurityGroupTokyoFTSUDPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref SecurityGroupTokyoFTSIP
+
+  FSxSecurityGroupTokyoFTSICMPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref SecurityGroupTokyoFTSIP
+
+  ## Ingress Osaka FTS
+  FSxSecurityGroupOsakaFTSTCP135Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 135
+      ToPort: 135
+      CidrIp: !Ref SecurityGroupOsakaFTSIP
+
+  FSxSecurityGroupOsakaFTSTCP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref SecurityGroupOsakaFTSIP
+
+  FSxSecurityGroupOsakaFTSTCPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref SecurityGroupOsakaFTSIP
+
+  FSxSecurityGroupOsakaFTSUDP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref SecurityGroupOsakaFTSIP
+
+  FSxSecurityGroupOsakaFTSUDPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref SecurityGroupOsakaFTSIP
+
+  FSxSecurityGroupOsakaFTSICMPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref SecurityGroupOsakaFTSIP
+
+  ## Ingress FSx SG
+  FSxSecurityGroupSelfSGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 0
+      SourceSecurityGroupId: !ImportValue FSxSecurityGroupId
+
+  FSxSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 0
+      CidrIp: 0.0.0.0/0
+
+  ### 共通FTS用IP
+  FSxSecurityGroupCommonFTSIPTCP135Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 135
+      ToPort: 135
+      CidrIp: !Ref CommonFTSIP
+
+  FSxSecurityGroupCommonFTSIPTCP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref CommonFTSIP
+
+  FSxSecurityGroupCommonFTSIPTCPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref CommonFTSIP
+
+  FSxSecurityGroupCommonFTSIPUDP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref CommonFTSIP
+
+  FSxSecurityGroupCommonFTSIPUDPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref CommonFTSIP
+
+  FSxSecurityGroupCommonFTSIPICMPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref CommonFTSIP
+
+
+  ### 検証CFTSとの接続設定 ###
+  #### 01
+  FSxSecurityGroupTestCommonFTSIP01TCP135Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 135
+      ToPort: 135
+      CidrIp: !Ref TestCommonFTSIP01
+
+  FSxSecurityGroupTestCommonFTSIP01TCP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref TestCommonFTSIP01
+
+  FSxSecurityGroupTestCommonFTSIP01TCPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref TestCommonFTSIP01
+
+  FSxSecurityGroupTestCommonFTSIP01UDP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref TestCommonFTSIP01
+
+  FSxSecurityGroupTestCommonFTSIP01UDPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref TestCommonFTSIP01
+
+  FSxSecurityGroupTestCommonFTSIP01ICMPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref TestCommonFTSIP01
+
+  #### 02
+  FSxSecurityGroupTestCommonFTSIP02TCP135Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 135
+      ToPort: 135
+      CidrIp: !Ref TestCommonFTSIP02
+
+  FSxSecurityGroupTestCommonFTSIP02TCP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref TestCommonFTSIP02
+
+  FSxSecurityGroupTestCommonFTSIP02TCPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref TestCommonFTSIP02
+
+  FSxSecurityGroupTestCommonFTSIP02UDP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref TestCommonFTSIP02
+
+  FSxSecurityGroupTestCommonFTSIP02UDPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref TestCommonFTSIP02
+
+  FSxSecurityGroupTestCommonFTSIP02ICMPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref TestCommonFTSIP02
+
+  #### 03
+  FSxSecurityGroupTestCommonFTSIP03TCP135Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 135
+      ToPort: 135
+      CidrIp: !Ref TestCommonFTSIP03
+
+  FSxSecurityGroupTestCommonFTSIP03TCP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref TestCommonFTSIP03
+
+  FSxSecurityGroupTestCommonFTSIP03TCPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref TestCommonFTSIP03
+
+  FSxSecurityGroupTestCommonFTSIP03UDP445Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 445
+      ToPort: 445
+      CidrIp: !Ref TestCommonFTSIP03
+
+  FSxSecurityGroupTestCommonFTSIP03UDPEphemeralIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: udp
+      FromPort: 1024
+      ToPort: 65535
+      CidrIp: !Ref TestCommonFTSIP03
+
+  FSxSecurityGroupTestCommonFTSIP03ICMPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !ImportValue FSxSecurityGroupId
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref TestCommonFTSIP03
+
+Outputs:
+  # FSx for Windows A Id
+  FSxForWindowsFileServerAId:
+    Value: !Ref FSxForWindowsFileServerA
+    Export:
+      Name: FSxForWindowsFileServerAId
+
+  # FSx for Windows C Id
+  FSxForWindowsFileServerCId:
+    Value: !Ref FSxForWindowsFileServerC
+    Export:
+      Name: FSxForWindowsFileServerCId
