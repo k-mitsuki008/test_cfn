@@ -544,15 +544,15 @@ Resources:
       ToPort: -1
       CidrIp: !Ref TestCommonFTSIP03
 
-Outputs:
-  # FSx for Windows A Id
-  FSxForWindowsFileServerAId:
-    Value: !Ref FSxForWindowsFileServerA
-    Export:
-      Name: FSxForWindowsFileServerAId
+# Outputs:
+#   # FSx for Windows A Id
+#   FSxForWindowsFileServerAId:
+#     Value: !Ref FSxForWindowsFileServerA
+#     Export:
+#       Name: FSxForWindowsFileServerAId
 
-  # FSx for Windows C Id
-  FSxForWindowsFileServerCId:
-    Value: !Ref FSxForWindowsFileServerC
-    Export:
-      Name: FSxForWindowsFileServerCId
+#   # FSx for Windows C Id
+#   FSxForWindowsFileServerCId:
+#     Value: !Ref FSxForWindowsFileServerC
+#     Export:
+#       Name: FSxForWindowsFileServerCId
