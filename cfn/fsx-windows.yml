@@ -85,48 +85,48 @@ Conditions:
   IsStg: !Equals [!Ref Env, "dev"]
 
 Resources:
-  # # FSx for Windows
-  # FSxForWindowsFileServerA:
-  #   Type: AWS::FSx::FileSystem
-  #   Properties:
-  #     FileSystemType: WINDOWS
-  #     StorageType: SSD
-  #     StorageCapacity: !Ref FsxStorageCapacity
-  #     SubnetIds:
-  #       - "subnet-050420cf7c6ba6a7d"
-  #     SecurityGroupIds:
-  #       - !ImportValue FSxSecurityGroupId
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub ${Env}.${ProjectName}-a
-  #     WindowsConfiguration:
-  #       ActiveDirectoryId: !ImportValue DirectoryServiceMicrosoftADId
-  #       ThroughputCapacity: !Ref ThroughputCapacity
-  #       DeploymentType: !Ref DeploymentType
-  #       AutomaticBackupRetentionDays: !Ref AutomaticBackupRetentionDays
-  #       DailyAutomaticBackupStartTime: !Ref DailyAutomaticBackupStartTime
-  #       WeeklyMaintenanceStartTime: !Ref WeeklyMaintenanceStartTime
+  # FSx for Windows
+  FSxForWindowsFileServerA:
+    Type: AWS::FSx::FileSystem
+    Properties:
+      FileSystemType: WINDOWS
+      StorageType: SSD
+      StorageCapacity: !Ref FsxStorageCapacity
+      SubnetIds:
+        - "subnet-050420cf7c6ba6a7d"
+      SecurityGroupIds:
+        - !ImportValue FSxSecurityGroupId
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}.${ProjectName}-a
+      WindowsConfiguration:
+        ActiveDirectoryId: !ImportValue DirectoryServiceMicrosoftADId
+        ThroughputCapacity: !Ref ThroughputCapacity
+        DeploymentType: !Ref DeploymentType
+        AutomaticBackupRetentionDays: !Ref AutomaticBackupRetentionDays
+        DailyAutomaticBackupStartTime: !Ref DailyAutomaticBackupStartTime
+        WeeklyMaintenanceStartTime: !Ref WeeklyMaintenanceStartTime
 
-  # FSxForWindowsFileServerC:
-  #   Type: AWS::FSx::FileSystem
-  #   Properties:
-  #     FileSystemType: WINDOWS
-  #     StorageType: SSD
-  #     StorageCapacity: !Ref FsxStorageCapacity
-  #     SubnetIds:
-  #       - "subnet-0c0a34efa7e750b7c"
-  #     SecurityGroupIds:
-  #       - !ImportValue FSxSecurityGroupId
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub ${Env}.${ProjectName}-c
-  #     WindowsConfiguration:
-  #       ActiveDirectoryId: !ImportValue DirectoryServiceMicrosoftADId
-  #       ThroughputCapacity: !Ref ThroughputCapacity
-  #       DeploymentType: !Ref DeploymentType
-  #       AutomaticBackupRetentionDays: !Ref AutomaticBackupRetentionDays
-  #       DailyAutomaticBackupStartTime: !Ref DailyAutomaticBackupStartTime
-  #       WeeklyMaintenanceStartTime: !Ref WeeklyMaintenanceStartTime
+  FSxForWindowsFileServerC:
+    Type: AWS::FSx::FileSystem
+    Properties:
+      FileSystemType: WINDOWS
+      StorageType: SSD
+      StorageCapacity: !Ref FsxStorageCapacity
+      SubnetIds:
+        - "subnet-0c0a34efa7e750b7c"
+      SecurityGroupIds:
+        - !ImportValue FSxSecurityGroupId
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}.${ProjectName}-c
+      WindowsConfiguration:
+        ActiveDirectoryId: !ImportValue DirectoryServiceMicrosoftADId
+        ThroughputCapacity: !Ref ThroughputCapacity
+        DeploymentType: !Ref DeploymentType
+        AutomaticBackupRetentionDays: !Ref AutomaticBackupRetentionDays
+        DailyAutomaticBackupStartTime: !Ref DailyAutomaticBackupStartTime
+        WeeklyMaintenanceStartTime: !Ref WeeklyMaintenanceStartTime
 
   # Security Group
   ## Ingress File EC2
@@ -544,15 +544,15 @@ Resources:
       ToPort: -1
       CidrIp: !Ref TestCommonFTSIP03
 
-# Outputs:
-#   # FSx for Windows A Id
-#   FSxForWindowsFileServerAId:
-#     Value: !Ref FSxForWindowsFileServerA
-#     Export:
-#       Name: FSxForWindowsFileServerAId
+Outputs:
+  # FSx for Windows A Id
+  FSxForWindowsFileServerAId:
+    Value: !Ref FSxForWindowsFileServerA
+    Export:
+      Name: FSxForWindowsFileServerAId
 
-#   # FSx for Windows C Id
-#   FSxForWindowsFileServerCId:
-#     Value: !Ref FSxForWindowsFileServerC
-#     Export:
-#       Name: FSxForWindowsFileServerCId
+  # FSx for Windows C Id
+  FSxForWindowsFileServerCId:
+    Value: !Ref FSxForWindowsFileServerC
+    Export:
+      Name: FSxForWindowsFileServerCId
