@@ -4,6 +4,10 @@
     "Env": "dev",
     "KeyPair": "km-keypair",
     "ADDomainName": "dev.voice-km.xxx",
-    "ShortADDomainName": "dev"
+    "ShortADDomainName": "dev",
+    "CommonFTSIP": "10.100.254.0/25",
+    "TestCommonFTSIP01": "192.168.4.0/24",
+    "TestCommonFTSIP02": "192.168.8.0/24",
+    "TestCommonFTSIP03": "192.168.128.0/28"
   }
 }
