@@ -50,7 +50,7 @@ Parameters:
 
   ADAdminPassword:
     Type: String
-    Default: "{{resolve:ssm-secure:ADAdminPassword:1}}"
+    Default: "{{resolve:ssm-secure:ADAdminPassword:5}}"
     NoEcho: true
 
   # EC2
