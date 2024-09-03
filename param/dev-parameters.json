@@ -1,13 +1,9 @@
 {
   "Parameters": {
-    "ProjectName": "voice-dx",
+    "ProjectName": "voice-km",
     "Env": "dev",
-
-    "DBMasterUserName": "postgres",
-    "DBMasterPassword": "-%VmCMruJ4]#W9Cjb4)RY2>{Jm9d",
-    "DBName": "dev_voice",
-    "RdsInstanceClass": "db.t3.medium",
-    "RdsEngineVersion": "12.19",
-    "SnapshotIdentifier": ""
+    "KeyPair": "km-keypair",
+    "ADDomainName": "dev.voice-km.xxx",
+    "ShortADDomainName": "dev"
   }
 }

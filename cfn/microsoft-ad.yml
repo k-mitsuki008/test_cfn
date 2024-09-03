@@ -1,0 +1,556 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS Managed Microsoft AD and AD Manage server
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Project Name Prefix and Environment
+        Parameters:
+          - ProjectName
+          - Env
+      - Label:
+          default: Microsoft AD
+        Parameters:
+          - ADDomainName
+          - ShortADDomainName
+          - ADAdminPassword
+      - Label:
+          default: EC2
+        Parameters:
+          - FileAmiId
+          - FileInstanceType
+          - KeyPair
+          - AssociatePublicIpAddress
+          - EBSVolumeSize
+          - EBSVolumeType
+      - Label:
+          default: EC2 Security Group
+        Parameters:
+          - SecurityGroupTokyoFTSIP
+          - SecurityGroupOsakaFTSIP
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: voice-km
+
+  Env:
+    Type: String
+    Default: prd
+
+  # AD
+  ADDomainName:
+    Type: String
+    Default: prd.voice-dx.storage
+
+  ShortADDomainName:
+    Type: String
+    Default: prd
+
+  ADAdminPassword:
+    Type: String
+    Default: "{{resolve:ssm-secure:ADAdminPassword:1}}"
+    NoEcho: true
+
+  # EC2
+  FileAmiId:
+    Description: Input an ami-id. Default is the latest Windows Server AMI.
+    Type: AWS::EC2::Image::Id
+    Default: ami-0a2202cf4c36161a1
+
+  FileInstanceType:
+    Description: Input an Instance type.
+    Type: String
+    Default: t2.medium
+
+  KeyPair:
+    Description: Select your key pair.
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: km-keypair
+
+  AssociatePublicIpAddress:
+    Description: Associate public ip address.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+  EBSVolumeSize:
+    Description: EBS Volume size.
+    Type: Number
+    Default: 100
+
+  EBSVolumeType:
+    Description: EBS Volume type.
+    Type: String
+    Default: gp2
+
+  SecurityGroupTokyoFTSIP:
+    Description: Security Group Tokyo FTS IP
+    Type: String
+    Default: 10.100.255.1/32
+
+  SecurityGroupOsakaFTSIP:
+    Description: Security Group Osaka FTS IP
+    Type: String
+    Default: 10.100.255.129/32
+
+  CommonFTSIP:
+    Type: String
+
+  ### 検証CFTSとの接続設定 ###
+  TestCommonFTSIP01:
+    Type: String
+  TestCommonFTSIP02:
+    Type: String
+  TestCommonFTSIP03:
+    Type: String
+
+Conditions:
+  IsStg: !Equals [!Ref Env, "dev"]
+
+Resources:
+  # MicrosoftAD
+  DirectoryServiceMicrosoftAD:
+    Type: AWS::DirectoryService::MicrosoftAD
+    Properties:
+      Name: !Ref ADDomainName
+      ShortName: !Ref ShortADDomainName
+      Edition: Standard
+      Password: !Ref ADAdminPassword
+      EnableSso: false
+      VpcSettings:
+        VpcId: "vpc-0cb1c626df9c2ec4b"
+        SubnetIds:
+          - "subnet-private1-eu-west-1a"
+          - "subnet-private1-eu-west-1b"
+
+  # EC2
+  ## A Zone
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref FileAmiId
+      InstanceType: !Ref FileInstanceType
+      KeyName: !Ref KeyPair
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref EBSVolumeSize
+            VolumeType: !Ref EBSVolumeType
+            DeleteOnTermination: true
+            Encrypted: true
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: !Ref AssociatePublicIpAddress
+          DeleteOnTermination: true
+          GroupSet:
+            - !Ref FileEC2SecurityGroup
+          DeviceIndex: 0
+          SubnetId: ""
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-file01-ec2
+        - Key: DLM-Lifecycle
+          Value: enabled
+        - Key: System
+          Value: file
+
+  ## C Zone
+  Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref FileAmiId
+      InstanceType: !Ref FileInstanceType
+      KeyName: !Ref KeyPair
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref EBSVolumeSize
+            VolumeType: !Ref EBSVolumeType
+            DeleteOnTermination: true
+            Encrypted: true
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: !Ref AssociatePublicIpAddress
+          DeleteOnTermination: true
+          GroupSet:
+            - !Ref FileEC2SecurityGroup
+          DeviceIndex: 0
+          SubnetId: b"
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-file02-ec2
+        - Key: DLM-Lifecycle
+          Value: enabled
+        - Key: System
+          Value: file
+
+  # Security Group
+  FSxSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: fsx security group
+      VpcId: "vpc-0cb1c626df9c2ec4b"
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-fsx-sg
+
+  FileEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: file ec2 security group
+      VpcId: "vpc-0cb1c626df9c2ec4b"
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-file-ec2-sg
+
+  FileEC2SecurityGroupIngressBastion:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: bastion-ec2
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 3389
+      ToPort: 3389
+      SourceSecurityGroupId: "sg-055d4a5049152ae97"
+
+  SecurityGroupTokyoFTSIPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref SecurityGroupTokyoFTSIP
+
+  SecurityGroupOsakaFTSIPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref SecurityGroupOsakaFTSIP
+
+  SecurityGroupFSxSGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 0
+      SourceSecurityGroupId: !Ref FSxSecurityGroup
+
+  FileEC2SecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 0
+      CidrIp: 0.0.0.0/0
+
+  ### 共通FTS用IP
+  CommonFTSIPIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref CommonFTSIP
+
+  ### 検証CFTSとの接続設定 ###
+  TestCommonFTSIP01Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref TestCommonFTSIP01
+
+  TestCommonFTSIP02Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref TestCommonFTSIP02
+
+  TestCommonFTSIP03Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsStg
+    Properties:
+      GroupId: !Ref FileEC2SecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: !Ref TestCommonFTSIP03
+
+  # IAM Role
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref InstanceRole
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - "arn:aws:iam::aws:policy/AmazonSSMDirectoryServiceAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        - !Sub "arn:aws:iam::${AWS::AccountId}:policy/SessionManagerPermissions"
+      RoleName: !Sub ${Env}-${ProjectName}-file-ec2-role
+
+  ### Monitoring ###
+  File01StatusCheckFailed:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file01-status-check-failed
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: StatusCheckFailed
+      Namespace: AWS/EC2
+      Statistic: Sum
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1 # このメトリクスは 0 (合格) または 1 (失敗) となります。
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  File01CPUUtilizationHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file01-cpu-utilization-high
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance
+      Period: 60
+      EvaluationPeriods: 15
+      DatapointsToAlarm: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  File01DiskUsedPercentHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file01-disk-used-percent-high
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: LogicalDisk % Free Space # 論理ディスクの空き領域（Linuxのメトリクス disk_used_percent と逆なので注意！）
+      Namespace: CWAgent
+      Statistic: Average
+      Dimensions:
+        - Name: instance
+          Value: "C:"
+        - Name: InstanceId
+          Value: !Ref Instance
+        - Name: ImageId
+          Value: !Ref FileAmiId
+        - Name: objectname
+          Value: LogicalDisk
+        - Name: InstanceType
+          Value: !Ref FileInstanceType
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 20
+      ComparisonOperator: LessThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  File01MemUsedPercentHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file01-mem-used-percent-high
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: Memory % Committed Bytes In Use
+      Namespace: CWAgent
+      Statistic: Average
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance
+        - Name: ImageId
+          Value: !Ref FileAmiId
+        - Name: objectname
+          Value: Memory
+        - Name: InstanceType
+          Value: !Ref FileInstanceType
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  ####### 02 #######
+  File02StatusCheckFailed:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file02-status-check-failed
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: StatusCheckFailed
+      Namespace: AWS/EC2
+      Statistic: Sum
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance2
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1 # このメトリクスは 0 (合格) または 1 (失敗) となります。
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  File02CPUUtilizationHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file02-cpu-utilization-high
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance2
+      Period: 60
+      EvaluationPeriods: 15
+      DatapointsToAlarm: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  File02DiskUsedPercentHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file02-disk-used-percent-high
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: LogicalDisk % Free Space # 論理ディスクの空き領域（Linuxのメトリクス disk_used_percent と逆なので注意！）
+      Namespace: CWAgent
+      Statistic: Average
+      Dimensions:
+        - Name: instance
+          Value: "C:"
+        - Name: InstanceId
+          Value: !Ref Instance2
+        - Name: ImageId
+          Value: !Ref FileAmiId
+        - Name: objectname
+          Value: LogicalDisk
+        - Name: InstanceType
+          Value: !Ref FileInstanceType
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 20
+      ComparisonOperator: LessThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  File02MemUsedPercentHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Env}-${ProjectName}-ec2-file02-mem-used-percent-high
+      ActionsEnabled: true
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic
+      InsufficientDataActions: []
+      MetricName: Memory % Committed Bytes In Use
+      Namespace: CWAgent
+      Statistic: Average
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance2
+        - Name: ImageId
+          Value: !Ref FileAmiId
+        - Name: objectname
+          Value: Memory
+        - Name: InstanceType
+          Value: !Ref FileInstanceType
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: missing
+
+Outputs:
+  # AD Id
+  DirectoryServiceMicrosoftADId:
+    Value: !Ref DirectoryServiceMicrosoftAD
+    Export:
+      Name: DirectoryServiceMicrosoftADId
+
+  # EC2 SG ID
+  FileEC2SecurityGroupId:
+    Value: !Ref FileEC2SecurityGroup
+    Export:
+      Name: FileEC2SecurityGroupId
+
+  # FSx Security Group Id
+  FSxSecurityGroupId:
+    Value: !Ref FSxSecurityGroup
+    Export:
+      Name: FSxSecurityGroupId
