@@ -22,7 +22,7 @@ Metadata:
 Parameters:
   ProjectName:
     Type: String
-    Default: voice-dx
+    Default: voice-km
 
   Env:
     Type: String
@@ -39,7 +39,7 @@ Parameters:
   KeyPair:
     Description: Select your key pair.
     Type: AWS::EC2::KeyPair::KeyName
-    Default: aws-kddi-voice-dx-prd-ap-northeast-1
+    Default: aws-kddi-voice-km-prd-ap-northeast-1
 
   AssociatePublicIpAddress:
     Description: Associate public ip address.
@@ -168,8 +168,8 @@ Resources:
               mv /home/$DIR/.ssh/${Env}_authorized_keys /home/$DIR/.ssh/authorized_keys
               rm -f /home/$DIR/.ssh/*_authorized_keys
             done
-            mv /home/kddiadm/kddi-voice-dx-portal/${Env}.env /home/kddiadm/kddi-voice-dx-portal/.env
-            rm -f /home/kddiadm/kddi-voice-dx-portal/*.env
+            mv /home/kddiadm/kddi-voice-km-portal/${Env}.env /home/kddiadm/kddi-voice-km-portal/.env
+            rm -f /home/kddiadm/kddi-voice-km-portal/*.env
             ### Monitoring ###
             aws --region ${AWS::Region} cloudwatch put-metric-alarm \
             --alarm-name ${Env}-${ProjectName}-ec2-batch-status-check-failed \
