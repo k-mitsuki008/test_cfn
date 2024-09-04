@@ -245,7 +245,7 @@ Resources:
       AutoScalingGroupName: !Sub ${Env}-${ProjectName}-batch-auto-scaling-group
       AvailabilityZones:
         - !Sub ${AWS::Region}a
-        - !Sub ${AWS::Region}c
+        - !Sub ${AWS::Region}b
       DesiredCapacity: !Ref BatchDesiredCapacity
       HealthCheckGracePeriod: !Ref BatchHealthCheckGracePeriod
       HealthCheckType: EC2
