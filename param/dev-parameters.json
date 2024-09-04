@@ -9,6 +9,8 @@
     "TestCommonFTSIP01": "192.168.4.0/24",
     "TestCommonFTSIP02": "192.168.8.0/24",
     "TestCommonFTSIP03": "192.168.128.0/28",
-    "FsxStorageCapacity": "32"
+    "FsxStorageCapacity": "32",
+    "BatchAmiId": "ami-0a2202cf4c36161a1",
+    "BatchInstanceType": "t2.medium"
   }
 }

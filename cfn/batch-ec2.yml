@@ -1,0 +1,263 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Batch EC2 Instance
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Project Name Prefix and Environment
+        Parameters:
+          - ProjectName
+          - Env
+      - Label:
+          default: EC2
+        Parameters:
+          - BatchAmiId
+          - BatchInstanceType
+          - KeyPair
+          - AssociatePublicIpAddress
+          - EBSVolumeSize
+          - EBSVolumeType
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: voice-dx
+
+  Env:
+    Type: String
+    Default: prd
+
+  # EC2
+  BatchAmiId:
+    Type: AWS::EC2::Image::Id
+
+  BatchInstanceType:
+    Type: String
+    Default: t3.micro
+
+  KeyPair:
+    Description: Select your key pair.
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: aws-kddi-voice-dx-prd-ap-northeast-1
+
+  AssociatePublicIpAddress:
+    Description: Associate public ip address.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+  EBSVolumeSize:
+    Description: EBS Volume size.
+    Type: Number
+    Default: 100
+
+  EBSVolumeType:
+    Description: EBS Volume type.
+    Type: String
+    Default: gp3
+
+  # Auto Scaling
+  BatchMinInstanceSize:
+    Type: Number
+    Default: 1
+
+  BatchMaxInstanceSize:
+    Type: Number
+    Default: 1
+
+  BatchDesiredCapacity:
+    Type: Number
+    Default: 1
+
+  BatchHealthCheckGracePeriod:
+    Type: Number
+    Default: 300
+
+Resources:
+  # IAM Role
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref InstanceRole
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+        - !Sub "arn:aws:iam::${AWS::AccountId}:policy/SessionManagerPermissions"
+      RoleName: !Sub ${Env}-${ProjectName}-batch-ec2-role
+      Policies:
+        - PolicyName: batch-ec2-s3-policy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:PutObject
+                  - s3:AbortMultipartUpload
+                  - s3:GetObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub arn:aws:s3:::${Env}-${ProjectName}-storage-bucket
+                  - !Sub arn:aws:s3:::${Env}-${ProjectName}-storage-bucket/*
+                  - !Sub arn:aws:s3:::${Env}-${ProjectName}-zip-download-storage-bucket
+                  - !Sub arn:aws:s3:::${Env}-${ProjectName}-zip-download-storage-bucket/*
+                  - !Sub arn:aws:s3:::${Env}-${ProjectName}-ai-param-bucket
+                  - !Sub arn:aws:s3:::${Env}-${ProjectName}-ai-param-bucket/*
+        - PolicyName: batch-ec2-read-policy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: "*"
+        - PolicyName: batch-ec2-put-metric-alarm-policy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricAlarm
+                Resource:
+                  - !Sub arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:*
+
+  BatchLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: !Ref EBSVolumeSize
+              VolumeType: !Ref EBSVolumeType
+              DeleteOnTermination: true
+              Encrypted: true
+        IamInstanceProfile:
+          Name: !Ref InstanceProfile
+        ImageId: !Ref BatchAmiId
+        InstanceType: !Ref BatchInstanceType
+        KeyName: !Ref KeyPair
+        NetworkInterfaces:
+          - AssociatePublicIpAddress: !Ref AssociatePublicIpAddress
+            DeleteOnTermination: true
+            Groups:
+              - "sg-055d4a5049152ae97"
+            DeviceIndex: 0
+            SubnetId: "subnet-050420cf7c6ba6a7d"
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            for DIR in $( ls /home/ | grep -v ^ec2-user$ ); do
+              mv /home/$DIR/.ssh/${Env}_authorized_keys /home/$DIR/.ssh/authorized_keys
+              rm -f /home/$DIR/.ssh/*_authorized_keys
+            done
+            mv /home/kddiadm/kddi-voice-dx-portal/${Env}.env /home/kddiadm/kddi-voice-dx-portal/.env
+            rm -f /home/kddiadm/kddi-voice-dx-portal/*.env
+            ### Monitoring ###
+            aws --region ${AWS::Region} cloudwatch put-metric-alarm \
+            --alarm-name ${Env}-${ProjectName}-ec2-batch-status-check-failed \
+            --ok-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic \
+            --alarm-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic \
+            --metric-name StatusCheckFailed \
+            --namespace AWS/EC2 \
+            --statistic Sum \
+            --dimensions Name=InstanceId,Value=`aws --region ap-northeast-1 ec2 describe-instances --filters "Name=private-ip-address,Values=$(hostname -I | awk '{print $1}')" --query 'Reservations[].Instances[].InstanceId' | jq -r .[]` \
+            --period 60 \
+            --evaluation-periods 1 \
+            --datapoints-to-alarm 1 \
+            --threshold 1 \
+            --comparison-operator GreaterThanOrEqualToThreshold \
+            --treat-missing-data missing
+            aws --region ${AWS::Region} cloudwatch put-metric-alarm \
+            --alarm-name ${Env}-${ProjectName}-ec2-batch-cpu-utilization-high \
+            --ok-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-developer-topic \
+            --alarm-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-developer-topic \
+            --metric-name CPUUtilization \
+            --namespace AWS/EC2 \
+            --statistic Maximum \
+            --dimensions Name=InstanceId,Value=`aws --region ap-northeast-1 ec2 describe-instances --filters "Name=private-ip-address,Values=$(hostname -I | awk '{print $1}')" --query 'Reservations[].Instances[].InstanceId' | jq -r .[]` \
+            --period 60 \
+            --evaluation-periods 15 \
+            --datapoints-to-alarm 3 \
+            --threshold 80 \
+            --comparison-operator GreaterThanOrEqualToThreshold \
+            --treat-missing-data missing
+            aws --region ${AWS::Region} cloudwatch put-metric-alarm \
+            --alarm-name ${Env}-${ProjectName}-ec2-batch-disk-used-percent-high \
+            --ok-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic \
+            --alarm-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-orion-topic \
+            --metric-name disk_used_percent \
+            --namespace CWAgent \
+            --statistic Average \
+            --dimensions Name=path,Value=/ Name=AutoScalingGroupName,Value=${Env}-${ProjectName}-batch-auto-scaling-group Name=InstanceId,Value=`aws --region ap-northeast-1 ec2 describe-instances --filters "Name=private-ip-address,Values=$(hostname -I | awk '{print $1}')" --query 'Reservations[].Instances[].InstanceId' | jq -r .[]` Name=ImageId,Value=${BatchAmiId} Name=InstanceType,Value=${BatchInstanceType} Name=device,Value=nvme0n1p1 Name=fstype,Value=xfs \
+            --period 60 \
+            --evaluation-periods 1 \
+            --datapoints-to-alarm 1 \
+            --threshold 80 \
+            --comparison-operator GreaterThanOrEqualToThreshold \
+            --treat-missing-data missing
+            aws --region ${AWS::Region} cloudwatch put-metric-alarm \
+            --alarm-name ${Env}-${ProjectName}-ec2-batch-mem-used-percent-high \
+            --ok-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-developer-topic \
+            --alarm-actions arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Env}-${ProjectName}-alarm-for-developer-topic \
+            --metric-name mem_used_percent \
+            --namespace CWAgent \
+            --statistic Average \
+            --dimensions Name=AutoScalingGroupName,Value=${Env}-${ProjectName}-batch-auto-scaling-group Name=InstanceId,Value=`aws --region ap-northeast-1 ec2 describe-instances --filters "Name=private-ip-address,Values=$(hostname -I | awk '{print $1}')" --query 'Reservations[].Instances[].InstanceId' | jq -r .[]` Name=ImageId,Value=${BatchAmiId} Name=InstanceType,Value=${BatchInstanceType} \
+            --period 60 \
+            --evaluation-periods 1 \
+            --datapoints-to-alarm 1 \
+            --threshold 80 \
+            --comparison-operator GreaterThanOrEqualToThreshold \
+            --treat-missing-data missing
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: !Sub ${Env}-${ProjectName}-batch-ec2
+              - Key: DLM-Lifecycle
+                Value: enabled
+              - Key: System
+                Value: batch
+      LaunchTemplateName: !Sub ${Env}-${ProjectName}-batch-ec2-launch-template
+
+  #### Auto Scaling ###
+  BatchAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Sub ${Env}-${ProjectName}-batch-auto-scaling-group
+      AvailabilityZones:
+        - !Sub ${AWS::Region}a
+        - !Sub ${AWS::Region}c
+      DesiredCapacity: !Ref BatchDesiredCapacity
+      HealthCheckGracePeriod: !Ref BatchHealthCheckGracePeriod
+      HealthCheckType: EC2
+      LaunchTemplate:
+         LaunchTemplateId: !Ref BatchLaunchTemplate
+         Version: !GetAtt BatchLaunchTemplate.LatestVersionNumber
+      MaxSize: !Ref BatchMaxInstanceSize
+      MinSize: !Ref BatchMinInstanceSize
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-batch-auto-scaling-group
+          PropagateAtLaunch: false
+      VPCZoneIdentifier:
+        - "subnet-050420cf7c6ba6a7d"
+        - "subnet-0c0a34efa7e750b7c"
