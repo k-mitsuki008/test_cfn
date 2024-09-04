@@ -124,9 +124,8 @@ Resources:
       VpcSettings:
         VpcId: "vpc-0cb1c626df9c2ec4b"
         SubnetIds:
-          - "subnet-050420cf7c6ba6a7d"
-          - "subnet-0c0a34efa7e750b7c"
           - "subnet-0039d4767e84e1d5d"
+          - "subnet-0c0a34efa7e750b7c"
 
   # EC2
   ## A Zone
@@ -150,7 +149,7 @@ Resources:
           GroupSet:
             - !Ref FileEC2SecurityGroup
           DeviceIndex: 0
-          SubnetId: "subnet-050420cf7c6ba6a7d"
+          Subnet: "subnet-0039d4767e84e1d5d"
       Tags:
         - Key: Name
           Value: !Sub ${Env}-${ProjectName}-file01-ec2
