@@ -160,7 +160,7 @@ Resources:
             Groups:
               - "sg-055d4a5049152ae97"
             DeviceIndex: 0
-            SubnetId: "subnet-050420cf7c6ba6a7d"
+            SubnetId: "subnet-0fb9d4d4fbdf06115"
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -259,5 +259,5 @@ Resources:
           Value: !Sub ${Env}-${ProjectName}-batch-auto-scaling-group
           PropagateAtLaunch: false
       VPCZoneIdentifier:
-        - "subnet-050420cf7c6ba6a7d"
-        - "subnet-0c0a34efa7e750b7c"
+        - "subnet-0fb9d4d4fbdf06115"
+        - "subnet-0978e9b4672e3d340"
