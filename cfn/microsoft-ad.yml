@@ -146,8 +146,8 @@ Resources:
       NetworkInterfaces:
         - AssociatePublicIpAddress: !Ref AssociatePublicIpAddress
           DeleteOnTermination: true
-          GroupSet:
-            - !Ref FileEC2SecurityGroup
+          # GroupSet:
+          #   - !Ref FileEC2SecurityGroup
           DeviceIndex: 0
           SubnetId: "subnet-050420cf7c6ba6a7d"
       Tags:
@@ -176,8 +176,8 @@ Resources:
       NetworkInterfaces:
         - AssociatePublicIpAddress: !Ref AssociatePublicIpAddress
           DeleteOnTermination: true
-          GroupSet:
-            - !Ref FileEC2SecurityGroup
+          # GroupSet:
+          #   - !Ref FileEC2SecurityGroup
           DeviceIndex: 0
           SubnetId: "subnet-0c0a34efa7e750b7c"
       Tags:
