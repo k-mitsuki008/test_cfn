@@ -318,7 +318,7 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
         - "arn:aws:iam::aws:policy/AmazonSSMDirectoryServiceAccess"
-        - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        # - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
         # - !Sub "arn:aws:iam::${AWS::AccountId}:policy/SessionManagerPermissions"
       RoleName: !Sub ${Env}-${ProjectName}-file-ec2-role
 
