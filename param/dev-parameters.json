@@ -16,6 +16,6 @@
     "RdsInstanceClass": "db.t3.medium",
     "DBMasterUserName": "dbuser",
     "DBName": "dev_voice",
-    "SnapshotIdentifier": ""
+    "SnapshotIdentifier": "dev-voice-dx-db-cluster-snapshot-bbb"
   }
 }
