@@ -123,30 +123,30 @@ Resources:
           Value: !Sub ${Env}-${ProjectName}-db-subnet
 
   # Parameter Group
-  ## Cluster
-  DBClusterParameterGroup:
-    Type: AWS::RDS::DBClusterParameterGroup
-    Properties:
-      Description: DBCluster ParameterGroup
-      Family: !Ref Family
-      Parameters:
-        timezone: UTC
-        ## １秒以上かかるスロークエリを出力
-        log_statement: mod
-        log_min_duration_statement: 1000
-      Tags:
-        - Key: Name
-          Value: !Sub ${Env}-${ProjectName}-cluster-pg
+  # ## Cluster
+  # DBClusterParameterGroup:
+  #   Type: AWS::RDS::DBClusterParameterGroup
+  #   Properties:
+  #     Description: DBCluster ParameterGroup
+  #     Family: !Ref Family
+  #     Parameters:
+  #       timezone: UTC
+  #       ## １秒以上かかるスロークエリを出力
+  #       log_statement: mod
+  #       log_min_duration_statement: 1000
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub ${Env}-${ProjectName}-cluster-pg
 
-  ## Instance
-  DBParameterGroup:
-    Type: AWS::RDS::DBParameterGroup
-    Properties:
-      Description: DB ParameterGroup
-      Family: !Ref Family
-      Tags:
-        - Key: Name
-          Value: !Sub ${Env}-${ProjectName}-pg
+  # ## Instance
+  # DBParameterGroup:
+  #   Type: AWS::RDS::DBParameterGroup
+  #   Properties:
+  #     Description: DB ParameterGroup
+  #     Family: !Ref Family
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub ${Env}-${ProjectName}-pg
 
   # Aurora Cluster
   DBCluster:
