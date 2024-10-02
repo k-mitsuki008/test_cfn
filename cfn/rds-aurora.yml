@@ -46,8 +46,7 @@ Parameters:
 
   Family:
     Type: String
-    # Default: aurora-postgresql12
-    Default: aurora-postgresql13
+    Default: aurora-postgresql12
 
   RdsInstanceClass:
     Type: String
@@ -155,7 +154,7 @@ Resources:
     Properties:
       DatabaseName: !Ref DBName
       DBClusterIdentifier: !Sub ${Env}-${ProjectName}-db-cluster
-      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
+      # DBClusterParameterGroupName: !Ref DBClusterParameterGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       SnapshotIdentifier: !If [UseDBSnapshot, !Ref SnapshotIdentifier, !Ref "AWS::NoValue"]
       Engine: !Ref RdsEngine
@@ -184,7 +183,7 @@ Resources:
       DBClusterIdentifier: !Ref DBCluster
       DBInstanceIdentifier: !Sub ${Env}-${ProjectName}-db-instance01
       DBInstanceClass: !Ref RdsInstanceClass
-      DBParameterGroupName: !Ref DBParameterGroup
+      # DBParameterGroupName: !Ref DBParameterGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       Engine: !Ref RdsEngine
       EngineVersion: !Ref RdsEngineVersion
@@ -204,7 +203,7 @@ Resources:
       DBClusterIdentifier: !Ref DBCluster
       DBInstanceIdentifier: !Sub ${Env}-${ProjectName}-db-instance02
       DBInstanceClass: !Ref RdsInstanceClass
-      DBParameterGroupName: !Ref DBParameterGroup
+      # DBParameterGroupName: !Ref DBParameterGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       Engine: !Ref RdsEngine
       EngineVersion: !Ref RdsEngineVersion
