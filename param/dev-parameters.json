@@ -12,7 +12,7 @@
     "FsxStorageCapacity": "32",
     "BatchAmiId": "ami-0a2202cf4c36161a1",
     "BatchInstanceType": "t2.medium",
-    "RdsEngineVersion": "12.13",
+    "RdsEngineVersion": "12.19",
     "RdsInstanceClass": "db.t3.medium",
     "DBMasterUserName": "dbuser",
     "DBName": "dev_voice",
