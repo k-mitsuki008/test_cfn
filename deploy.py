@@ -143,7 +143,7 @@ def process_yml(yml_item: YmlItem, all_param_dic: dict, deploys: bool) -> List:
     if ENV == "prd":
         stack_name = f"{PROJECT_NAME}-{stack_suffix}"
     else:
-        stack_name = f"{ENV}-{PROJECT_NAME}-{stack_suffix}"
+        stack_name = f"{ENV}-{PROJECT_NAME}-{stack_suffix}2"
 
     middle_name = "deploy" if deploys else "dryrun"
     change_set_name = f"{stack_suffix}-{middle_name}-{int(time.time())}"
