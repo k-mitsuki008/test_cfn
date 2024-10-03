@@ -1,6 +1,6 @@
 {
   "Parameters": {
-    "ProjectName": "voice-km3",
+    "ProjectName": "voice-km",
     "Env": "dev",
     "KeyPair": "km-keypair",
     "ADDomainName": "dev.voice-km.xxx",
@@ -12,7 +12,7 @@
     "FsxStorageCapacity": "32",
     "BatchAmiId": "ami-0a2202cf4c36161a1",
     "BatchInstanceType": "t2.medium",
-    "RdsEngineVersion": "13.15",
+    "RdsEngineVersion": "12.19",
     "RdsInstanceClass": "db.t3.medium",
     "DBMasterUserName": "dbuser",
     "DBName": "dev_voice",
