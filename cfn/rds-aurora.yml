@@ -206,7 +206,7 @@ Resources:
       DBClusterIdentifier: !Ref DBCluster
       DBInstanceIdentifier: !Sub ${Env}-${ProjectName}-db-instance02
       DBInstanceClass: !Ref RdsInstanceClass
-      DBParameterGroupName: !Ref DBParameterGroup
+      # DBParameterGroupName: !Ref DBParameterGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       Engine: !Ref RdsEngine
       EngineVersion: !Ref RdsEngineVersion
