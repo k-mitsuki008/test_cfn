@@ -1,6 +1,6 @@
 {
   "Parameters": {
-    "ProjectName": "voice-km2",
+    "ProjectName": "voice-km3",
     "Env": "dev",
     "KeyPair": "km-keypair",
     "ADDomainName": "dev.voice-km.xxx",
