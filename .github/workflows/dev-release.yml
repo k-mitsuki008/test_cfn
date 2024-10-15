@@ -26,9 +26,10 @@ jobs:
           source myenv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Deploy CFn
-        run: |
           python deploy.py
+      # - name: Deploy CFn
+      #   run: |
+      #     python deploy.py
       # - name: Deploy Lambda
       #   run: |
       #     sh lambda_deploy.sh
