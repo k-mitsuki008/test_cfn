@@ -16,6 +16,7 @@
     "RdsInstanceClass": "db.t3.medium",
     "DBMasterUserName": "dbuser",
     "DBName": "dev_voice",
-    "SnapshotIdentifier": ""
+    "SnapshotIdentifier": "",
+    "MonitoringIps": "10.10.0.157"
   }
 }
