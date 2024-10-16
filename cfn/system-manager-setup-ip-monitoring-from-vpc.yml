@@ -64,7 +64,7 @@ Resources:
               instance to setup the test (i.e. install the CloudWatch Logs agent,
               interact with AWS Systems Manager and Amazon CloudWatch).
             allowedPattern: "^subnet-[a-z0-9]{8,17}$"
-            default: !ImportValue VoiceDxPrivateSubnetAID
+            default: "subnet-050420cf7c6ba6a7d"
           TargetIPs:
             type: String
             description: >-
