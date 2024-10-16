@@ -20,13 +20,13 @@ jobs:
           aws-region: eu-west-1
       - name: Checkout
         uses: actions/checkout@v2.3.2
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
       - name: pip install
         run: |
           python -m venv ./venv
           source ./venv/bin/activate
-          echo "PATH=${PATH}" >> "${GITHUB_ENV}"
+          # echo "PATH=${PATH}" >> "${GITHUB_ENV}"
           pip install --upgrade pip
           pip install -r requirements.txt
       - name: Deploy CFn
