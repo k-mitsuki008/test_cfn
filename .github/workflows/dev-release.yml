@@ -20,6 +20,8 @@ jobs:
           aws-region: eu-west-1
       - name: Checkout
         uses: actions/checkout@v2.3.2
+      - name: Set up Python
+        uses: actions/setup-python@v5
       - name: pip install
         run: |
           pip install --upgrade pip
