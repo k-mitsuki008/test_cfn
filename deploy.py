@@ -34,7 +34,7 @@ class YmlItem:
 # Deploy(or Dryrun) Order of YML
 YML_ORDER = [
     YmlItem("rds-aurora.yml", "eu-west-1"),
-    # YmlItem("system-manager-setup-ip-monitoring-from-vpc.yml", "eu-west-1")
+    YmlItem("system-manager-setup-ip-monitoring-from-vpc.yml", "eu-west-1")
     # YmlItem("microsoft-ad.yml", "eu-west-1"),
     # YmlItem("fsx-windows.yml", "eu-west-1"),
     # YmlItem("batch-ec2.yml", "eu-west-1")
