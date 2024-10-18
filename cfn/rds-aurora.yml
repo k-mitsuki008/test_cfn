@@ -122,31 +122,31 @@ Resources:
         - Key: Name
           Value: !Sub ${Env}-${ProjectName}-db-subnet
 
-  # # Parameter Group
-  # ## Cluster
-  # DBClusterParameterGroup:
-  #   Type: AWS::RDS::DBClusterParameterGroup
-  #   Properties:
-  #     Description: DBCluster ParameterGroup
-  #     Family: !Ref Family
-  #     Parameters:
-  #       timezone: UTC
-  #       ## １秒以上かかるスロークエリを出力
-  #       log_statement: mod
-  #       log_min_duration_statement: 1000
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub ${Env}-${ProjectName}-cluster-pg
+  # Parameter Group
+  ## Cluster
+  DBClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: DBCluster ParameterGroup
+      Family: !Ref Family
+      Parameters:
+        timezone: UTC
+        ## １秒以上かかるスロークエリを出力
+        log_statement: mod
+        log_min_duration_statement: 1000
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-cluster-pg
 
-  # ## Instance
-  # DBParameterGroup:
-  #   Type: AWS::RDS::DBParameterGroup
-  #   Properties:
-  #     Description: DB ParameterGroup
-  #     Family: !Ref Family
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub ${Env}-${ProjectName}-pg
+  ## Instance
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: DB ParameterGroup
+      Family: !Ref Family
+      Tags:
+        - Key: Name
+          Value: !Sub ${Env}-${ProjectName}-pg
 
   # Aurora Cluster
   DBCluster:
@@ -154,8 +154,7 @@ Resources:
     Properties:
       DatabaseName: !Ref DBName
       DBClusterIdentifier: !Sub ${Env}-${ProjectName}-db-cluster
-      # DBClusterParameterGroupName: !Ref DBClusterParameterGroup
-      DBClusterParameterGroupName: default.aurora-postgresql12
+      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       SnapshotIdentifier: !If [UseDBSnapshot, !Ref SnapshotIdentifier, !Ref "AWS::NoValue"]
       Engine: !Ref RdsEngine
@@ -184,8 +183,7 @@ Resources:
       DBClusterIdentifier: !Ref DBCluster
       DBInstanceIdentifier: !Sub ${Env}-${ProjectName}-db-instance01
       DBInstanceClass: !Ref RdsInstanceClass
-      # DBParameterGroupName: !Ref DBParameterGroup
-      DBParameterGroupName: default.aurora-postgresql12
+      DBParameterGroupName: !Ref DBParameterGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       Engine: !Ref RdsEngine
       EngineVersion: !Ref RdsEngineVersion
@@ -205,8 +203,7 @@ Resources:
       DBClusterIdentifier: !Ref DBCluster
       DBInstanceIdentifier: !Sub ${Env}-${ProjectName}-db-instance02
       DBInstanceClass: !Ref RdsInstanceClass
-      # DBParameterGroupName: !Ref DBParameterGroup
-      DBParameterGroupName: default.aurora-postgresql12
+      DBParameterGroupName: !Ref DBParameterGroup
       Engine: !Ref RdsEngine
       EngineVersion: !Ref RdsEngineVersion
       PreferredMaintenanceWindow: !Ref MaintenanceWindow
